@@ -97,7 +97,13 @@ def _openai_api_request(self, function_header, context):
     url = f"{self._model_base_url}{self._model_relative_url}"
     payload = {
         "model": self._complete_model,
-        "prompt": context + "\n" + function_header,
+        "messages": [
+            {"role": "user",
+             "content": "Complete the following unit test function. Only write the completion; do NOT rewrite the function. " +\
+                        "Do NOT include any comments or description.\n" +\
+                        context + "\n" + function_header
+            }
+        ],
         "max_tokens": 200,
         "temperature": self._temperature,
         "stop": ["\n# Unit test for", "\ndef ", "\nclass "],
@@ -328,12 +334,22 @@ class _OpenAILanguageModel:
         """
         context = self._get_maximal_source_context(context_start, context_end)
 
-        if self.model_base_url == "https://api.openai.com":
+        if self._complete_model.startswith("codex-"):
             url, payload, headers = _openai_api_legacy_request(
                 self, function_header, context
             )
         else:
             url, payload, headers = _openai_api_request(self, function_header, context)
+
+        report_dir = config.configuration.statistics_output.report_dir
+        if report_dir != "pynguin-report":
+            with open(
+                os.path.join(report_dir, "llm_prompts.txt"),
+                "a+",
+                encoding="UTF-8",
+            ) as log_file:
+                log_file.write(f"\n\n---- {datetime.now()}\n")
+                log_file.write(json.dumps(payload))
 
         # We want to stop the generation before it spits out a bunch of other tests,
         # because that slows things down
@@ -350,7 +366,7 @@ class _OpenAILanguageModel:
             logger.error("Failed to call for completion:\n%s", res.json())
             logger.error(self.complete_model)
             return ""
-        return res.json()["choices"][0]["text"]
+        return res.json()["choices"][0]["message"]["content"]
 
     def _get_num_tokens_at_line(self, line_num: int) -> int:
         """Get the approximate number of tokens for the source file at line_num.
@@ -461,9 +477,27 @@ class _OpenAILanguageModel:
         completion = self._call_completion(
             context + function_header, start_line, end_line
         )
+
+        report_dir = config.configuration.statistics_output.report_dir
+        if report_dir != "pynguin-report":
+            with open(
+                os.path.join(report_dir, "llm_completions.txt"),
+                "a+",
+                encoding="UTF-8",
+            ) as log_file:
+                log_file.write(f"\n\n# Generated at {datetime.now()}\n")
+                log_file.write(completion)
+
+        def extract_python(completion):
+            import re
+            if (m := re.search(r'```python\n(.*?)(?:```|\Z)', completion, re.DOTALL)):
+                return m.group(1)
+            return completion
+        completion = extract_python(completion)
+        # FIXME is a \n missing between function_header and completion?
+
         # Remove any trailing statements that don't parse
         generated_test = fixup_result(function_header + completion)
-        report_dir = config.configuration.statistics_output.report_dir
         if report_dir != "pynguin-report":
             with open(
                 os.path.join(report_dir, "codex_generations.py"),

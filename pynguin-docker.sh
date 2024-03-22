@@ -73,6 +73,11 @@ then
   exit 1
 fi
 
+# Automatically update codamosa if /codamosa is present
+if [[ -d /codamosa ]]; then
+    pip install /codamosa
+fi
+
 # Install dependencies by installing the package
 pip install -r "${PACKAGE_DIR}/package.txt"
 

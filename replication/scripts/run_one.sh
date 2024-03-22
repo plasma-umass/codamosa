@@ -1,6 +1,15 @@
 #!/bin/bash
 # This file lets you run one instance of codamosa, etc.
 
+# pynguin-runner is CodaMosa's original pynguin runner;
+# updating-pynguin-runner automatically updates CodaMosa from /codamosa, if present;
+#   This was used for developing CodaMosa (gpt4).
+# gpt4-coda-runner has the "final" version of CodaMosa (gpt4) preinstalled.
+
+#OPTS_AND_IMAGE="pynguin-runner"
+#OPTS_AND_IMAGE="-v ${HOME}/codamosa:/codamosa:ro updating-pynguin-runner"
+OPTS_AND_IMAGE="gpt4-coda-runner"
+
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]:-$0}"; )" &> /dev/null && pwd 2> /dev/null; )";
 
 if [ "$#" -lt 5 ]; then
@@ -33,7 +42,7 @@ do
 		echo "Invalid option $PLAY_OPTION"
 		exit 1
 	fi
-CMD="docker run --rm -v ${TEST_DIR}:/input:ro -v ${OUT_DIR}:/output -v ${TEST_DIR}:/package:ro pynguin-runner --assertion-generation NONE --project_path /input --module-name ${TEST_MOD} --output-path /output --maximum_search_time $SEARCH_TIME --output_variables TargetModule,Coverage,BranchCoverage,LineCoverage,ParsedStatements,UninterpStatements,ParsableStatements,LLMCalls,LLMQueryTime,LLMStageSavedTests,LLMStageSavedMutants,LLMNeededExpansion,LLMNeededUninterpreted,LLMNeededUninterpretedCallsOnly,RandomSeed,AccessibleObjectsUnderTest,CodeObjects,CoverageTimeline --report-dir /output --coverage_metrics BRANCH,LINE $ARGS $PLAY_CONFIG -v"
+CMD="docker run --rm -v ${TEST_DIR}:/input:ro -v ${OUT_DIR}:/output -v ${TEST_DIR}:/package:ro ${OPTS_AND_IMAGE} --assertion-generation NONE --project_path /input --module-name ${TEST_MOD} --output-path /output --maximum_search_time $SEARCH_TIME --output_variables TargetModule,Coverage,BranchCoverage,LineCoverage,ParsedStatements,UninterpStatements,ParsableStatements,LLMCalls,LLMQueryTime,LLMStageSavedTests,LLMStageSavedMutants,LLMNeededExpansion,LLMNeededUninterpreted,LLMNeededUninterpretedCallsOnly,RandomSeed,AccessibleObjectsUnderTest,CodeObjects,CoverageTimeline --report-dir /output --coverage_metrics BRANCH,LINE $ARGS $PLAY_CONFIG -v"
 	$CMD
 	cat $OUT_DIR/statistics.csv
 done
