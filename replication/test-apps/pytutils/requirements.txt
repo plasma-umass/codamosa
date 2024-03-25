@@ -1,1 +1,8 @@
-requirements/install.pip
+tldextract
+cachetools
+py
+pygments
+six
+wrapt
+attrs
+colorlog
