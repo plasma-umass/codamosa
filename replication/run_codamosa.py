@@ -9,7 +9,9 @@ import os
 
 openai_key=Path(os.environ['HOME']) / "openai-key"
 modules_csv = Path("test-apps") / "good_modules.csv"
-codamosa_tests = Path("gpt4-coda")
+#config = "gpt4"
+config = "gpt4o"
+codamosa_tests = Path(f"{config}-coda")
 runs=1
 max_search_secs=600
 
@@ -31,6 +33,6 @@ for run in range(runs):
         except FileExistsError:
             continue
 
-        cmd = f"scripts/run_one.sh {m} {str(d)} config-args/gpt-4 {max_search_secs} --auth {openai_key}"
+        cmd = f"scripts/run_one.sh {m} {str(d)} config-args/{config} {max_search_secs} --auth {openai_key}"
         print(f"**** {cmd}")
         subprocess.run(cmd, shell=True, check=False)

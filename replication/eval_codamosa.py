@@ -11,26 +11,36 @@ def parse_args():
     import argparse
     ap = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    ap.add_argument('--codamosa-results', choices=['gpt4', 'codex'], default='gpt4',
+    ap.add_argument('--codamosa-results', choices=['gpt4o', 'gpt4', 'codex'], default='gpt4o',
                     help='codamosa results to use')
-    ap.add_argument('--isolate-tests', default=False,
+    ap.add_argument('--isolate-tests', default=True,
                     action=argparse.BooleanOptionalAction,
                     help='run tests in isolation (to work around any state pollution) when measuring coverage')
 
-    return ap.parse_args()
+    args = ap.parse_args()
+
+    if args.codamosa_results not in ('gpt4', 'codex') and not args.isolate_tests:
+        ap.error(f'--isolate-tests is required with {args.codamosa_results}')
+
+    return args
 
 args = parse_args()
 
-codamosa_tests = Path("gpt4-coda") if args.codamosa_results == 'gpt4' else \
-                 Path("codamosa-dataset/final-exp/codamosa-0.8-uninterp")
-output = Path(f"output-{args.codamosa_results}" + ("-isolated" if args.isolate_tests else ""))
+if args.codamosa_results == 'codex':
+    codamosa_tests = Path("codamosa-dataset/final-exp/codamosa-0.8-uninterp")
+else:
+    codamosa_tests = Path("{args.codamosa_results}-coda")
+
+if args.isolate_tests and args.codamosa_results in ('gpt4', 'codex'):
+    output = Path(f"output-{args.codamosa_results}-isolated")
+else:
+    output = Path(f"output-{args.codamosa_results}")
 
 modules_csv = Path("test-apps") / "good_modules.csv"
 
-
 output.mkdir(exist_ok=True)
 
-slipcover_args = '--isolate-tests' if args.isolate_tests else ''
+slipcover_args = ''
 
 with modules_csv.open() as f:
     reader = csv.reader(f)
@@ -44,6 +54,9 @@ with modules_csv.open() as f:
             pkg = module.split('.')[0]
 
             pytest_args = ''
+
+            if args.isolate_tests:
+                pytest_args += ' --cleanslate'
 
             # Some of these 'failing' tests damage the system so much that it is not
             # possible to get a coverage measurement.  Disabling them turned out to be

@@ -9,8 +9,8 @@ cd package
 pip install -r package.txt #|| exit 1
 
 # no longer needed: 'slipcover-runner' image now has these
-#pip install --upgrade 'slipcover==1.0.6' || exit 1
-#pip install pytest-timeout pytest-forked || exit 1
+#pip install --upgrade slipcover || exit 1
+#pip install pytest-timeout pytest-cleanslate || exit 1
 
 PKG=$1
 JSON=$2
