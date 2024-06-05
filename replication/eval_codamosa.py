@@ -29,7 +29,7 @@ args = parse_args()
 if args.codamosa_results == 'codex':
     codamosa_tests = Path("codamosa-dataset/final-exp/codamosa-0.8-uninterp")
 else:
-    codamosa_tests = Path("{args.codamosa_results}-coda")
+    codamosa_tests = Path(f"{args.codamosa_results}-coda")
 
 if args.isolate_tests and args.codamosa_results in ('gpt4', 'codex'):
     output = Path(f"output-{args.codamosa_results}-isolated")
