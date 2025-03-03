@@ -1,3 +1,7 @@
+> [!NOTE]
+> This Codamosa fork contains changes to facilitate [CoverUp](https://github.com/plasma-umass/coverup)'s evaluation.
+
+---
 # Codamosa
 
 This repository contains the code for CodaMOSA. CodaMOSA integrates queries to a Large Language Model (currently supports the OpenAI API) into search-based algorithms for unit test generation. The paper on CodaMOSA will be published at ICSE'23:
